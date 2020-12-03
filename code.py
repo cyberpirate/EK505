@@ -39,7 +39,7 @@ def forwardKinematics(T1, T2, T3, D):
     ARM2_fwd = ARM2_fwd.rotate(T1, axis=vec(0, 1, 0))
 
     ARM3_pos = ARM2_pos + ARM2_fwd
-    ARM3_fwd = vec(ARM_LENGTH, 0, 0)
+    ARM3_fwd = ARM2_fwd.rotate(T3, ARM2_fwd.cross(vec(0, 1, 0)))
 
     return ARM1_pos, ARM1_fwd, ARM2_pos, ARM2_fwd, ARM3_pos, ARM3_fwd
 
@@ -56,12 +56,12 @@ i = 0
 while True:
     rate(60)
 
-    x = to01(i/100)
+    T1 = scale(to01(i/100), 0, 2*math.pi)
+    T2 = scale(to01(i/200), -math.pi/2, math.pi/2)
+    T3 = scale(to01(i/100), -math.pi/2, math.pi/2)
 
-    T1 = scale(x, 0, 2*math.pi)
-    T2 = scale(x, -math.pi/2, math.pi/2)
-
-    armState = forwardKinematics(T1, T2, 0, 0)
+    # armState = forwardKinematics(T1, T2, T3, 0)
+    armState = forwardKinematics(T1, -math.pi/4, T3, 0)
         
     ARM1.pos  = armState[0]
     ARM1.axis = armState[1]
