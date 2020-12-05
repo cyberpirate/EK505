@@ -4,148 +4,39 @@ from vpython import *
 import math
 import numpy as np
 import AStar
+import CSpace
+import Collision
 
-cspaceLim = (
-    (0, 2*math.pi),
-    (-math.pi/2, math.pi/2),
-    (-math.pi/2, math.pi/2),
-    (0, 1)
-)
-
-cspaceSegs = (
-    200,
-    100,
-    100,
-    100
-)
-
-cspace = np.ones(cspaceSegs, np.bool)
-
-ARM_RAD = 1
+ARM_RAD = 0.25
 ARM_LENGTH = 4
 GRAB_MIN = 0.25
 GRAB_MAX = 1
 GRAB_LEN = 1
+GRAB_RAD = 0.1
 
 # ARM1 = cylinder(length=ARM_LENGTH, radius=ARM_RAD, color=color.green)
 # ARM2 = cylinder(length=ARM_LENGTH, radius=ARM_RAD, color=color.red)
 # ARM1 = box(size=vec(3, 3, 3))
 # ARM2 = box(size=vec(3, 3, 3))
 
-ARM1 = arrow(color=color.green)
-ARM2 = arrow(color=color.red)
-ARM3 = arrow(color=color.blue)
-GRAB_BAR1 = arrow(color=color.white)
-GRAB_BAR2 = arrow(color=color.white)
+ARM1 = cylinder(radius=ARM_RAD, color=color.green)
+ARM2 = cylinder(radius=ARM_RAD, color=color.red)
+ARM3 = cylinder(radius=ARM_RAD, color=color.blue)
+GRAB_BAR1 = cylinder(radius=GRAB_RAD, color=color.white)
+GRAB_BAR2 = cylinder(radius=GRAB_RAD, color=color.white)
 
-def cspaceToState(T1I, T2I, T3I, DI):
-
-    T1_step = (cspaceLim[0][1] - cspaceLim[0][0]) / cspaceSegs[0]
-    T2_step = (cspaceLim[1][1] - cspaceLim[1][0]) / cspaceSegs[1]
-    T3_step = (cspaceLim[2][1] - cspaceLim[2][0]) / cspaceSegs[2]
-    D_step  = (cspaceLim[3][1] - cspaceLim[3][0]) / cspaceSegs[3]
-
-    return (
-        cspaceLim[0][0] + T1_step*T1I,
-        cspaceLim[1][0] + T2_step*T2I,
-        cspaceLim[2][0] + T3_step*T3I,
-        cspaceLim[3][0] + D_step*DI
-    )
-
-def stateToCspace(T1, T2, T3, D):
-
-    T1_step = (cspaceLim[0][1] - cspaceLim[0][0]) / cspaceSegs[0]
-    T2_step = (cspaceLim[1][1] - cspaceLim[1][0]) / cspaceSegs[1]
-    T3_step = (cspaceLim[2][1] - cspaceLim[2][0]) / cspaceSegs[2]
-    D_step  = (cspaceLim[3][1] - cspaceLim[3][0]) / cspaceSegs[3]
-
-    return (
-        math.floor((T1 - cspaceLim[0][0]) / T1_step),
-        math.floor((T2 - cspaceLim[1][0]) / T2_step),
-        math.floor((T3 - cspaceLim[2][0]) / T3_step),
-        math.floor((D  - cspaceLim[3][0]) / D_step)
-    )
-
-class CSpaceNode(AStar.AStarNode):
-
-    def __init__(self, T1I, T2I, T3I, DI, nodeFilters):
-        self.T1I = T1I
-        self.T2I = T2I
-        self.T3I = T3I
-        self.DI = DI
-        self.nodeFilters = nodeFilters
-
-    def __eq__(self, other):
-
-        if not hasattr(other, "T1I") or self.T1I != other.T1I:
-            return False
-
-        if not hasattr(other, "T2I") or self.T2I != other.T2I:
-            return False
-
-        if not hasattr(other, "T3I") or self.T3I != other.T3I:
-            return False
-
-        if not hasattr(other, "DI") or self.DI != other.DI:
-            return False
-
-        return True
-    
-    def __str__(self):
-        return "({}, {}, {}, {})".format(*cspaceToState(self.T1I, self.T2I, self.T3I, self.DI))
-    
-    def __repr__(self):
-        return "CSpaceNode{}".format(str(self))
-
-    def validNode(self):
-
-        for nodeFilter in self.nodeFilters:
-            if not nodeFilter(self.T1I, self.T2I, self.T3I, self.DI):
-                return False
-
-        return True
-
-
-    def adj(self):
-
-        ret = [
-            CSpaceNode(self.T1I+1, self.T2I, self.T3I, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I-1, self.T2I, self.T3I, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I+1, self.T3I, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I-1, self.T3I, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I, self.T3I+1, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I, self.T3I-1, self.DI, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I, self.T3I, self.DI+1, self.nodeFilters),
-            CSpaceNode(self.T1I, self.T2I, self.T3I, self.DI-1, self.nodeFilters)
-        ]
-
-        ret = [node for node in ret if self.validNode()]
-
-        return ret
-
-    def estCost(self, node):
-
-        T1I_cost = abs(self.T1I - node.T1I)
-        T2I_cost = abs(self.T2I - node.T2I)
-        T3I_cost = abs(self.T3I - node.T3I)
-        DI_cost  = abs(self.DI  - node.DI)
-
-        return T1I_cost + T2I_cost + T3I_cost + DI_cost
-
-    def cost(self, node):
-        if self.estCost(node) != 1:
-            raise RuntimeError("Node not adjacent")
-        return 1
+OBS = [
+    sphere(pos=vec(1, 1, 0), radius=GRAB_MIN, color=color.red),
+    sphere(pos=vec(2, 5, -1), radius=1, color=color.red)
+]
 
 def followPath(path):
 
     for node in path:
         rate(30)
 
-        state = cspaceToState(node.T1I, node.T2I, node.T3I, node.DI)
+        state = CSpace.cspaceToState(node.T1I, node.T2I, node.T3I, node.DI)
         renderForwardKinematics(*state)
-
-
 
 def originAxis(l=1):
     arrow(axis=(vec(l, 0, 0)), color=color.red)
@@ -157,6 +48,21 @@ def to01(i):
 
 def scale(x, bot, top):
     return bot + (top - bot) * x
+
+def checkNoCollision(T1I, T2I, T3I, DI):
+    state = CSpace.cspaceToState(T1I, T2I, T3I, DI)
+
+    worldState = forwardKinematics(*state)
+
+    for i in range(0, len(worldState), 2):
+        pos = worldState[i]
+        fwd = worldState[i+1]
+
+        for o in OBS:
+            if Collision.sphereInter(pos, fwd, o.pos, o.radius):
+                return False
+
+    return True
 
 def forwardKinematics(T1, T2, T3, D):
 
@@ -206,15 +112,38 @@ def renderForwardKinematics(T1, T2, T3, D):
     GRAB_BAR2.pos = armState[8]
     GRAB_BAR2.axis = armState[9]
 
+def inverseKinematics(x, y, z):
+
+    L1 = ARM_LENGTH
+    L2 = ARM_LENGTH
+    L3 = ARM_LENGTH
+
+    T1 = math.atan(y / x)
+
+    T2 = math.atan((z - L1) / math.sqrt(x**2 + y**2))
+
+    T2_ = math.acos((L3**2 - L2**2 - x**2 - y**2 - (z - L1)**2) / (-2*L2*math.sqrt(x**2 + y**2 + (z - L1)**2)))
+
+    T3 = math.pi - math.acos((x**2 + y**2 + (z - L1)**2 - L2**2 - L3**2) / (-2*L2*L3))
+
+    return (
+        (T1, T2 + T2_, -T3),
+        (T1, T2 - T2_, T3)
+    )
+
 # originAxis(10)
+
+# print(inverseKinematics(-ARM_LENGTH/2, ARM_LENGTH, 0))
+# print(inverseKinematics((1 + math.sqrt(3)) / 2, 0, (3 + sqrt(3)) / 2))
+# print(inverseKinematics(1, 1, 1))
 
 renderForwardKinematics(0, 0, 0, 0)
 
-startCspace = stateToCspace(0, 0, 0, 0)
-endCspace = stateToCspace(math.pi, math.pi/2, -math.pi/2, 1)
+startCspace = CSpace.stateToCspace(0, 0, 0, 0)
+endCspace = CSpace.stateToCspace(math.pi, math.pi/2, -math.pi/2, 1)
 
-startNode = CSpaceNode(*startCspace, [])
-endNode = CSpaceNode(*endCspace, [])
+startNode = CSpace.CSpaceNode(*startCspace, [checkNoCollision])
+endNode = CSpace.CSpaceNode(*endCspace, [])
 
 path = AStar.AStar(startNode, endNode)
 
