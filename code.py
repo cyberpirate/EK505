@@ -26,9 +26,10 @@ GRAB_BAR1 = cylinder(radius=GRAB_RAD, color=color.white)
 GRAB_BAR2 = cylinder(radius=GRAB_RAD, color=color.white)
 
 OBS = [
-    sphere(pos=vec(1, 1, 0), radius=GRAB_MIN, color=color.red),
-    sphere(pos=vec(2, 5, -1), radius=1, color=color.red)
+    sphere(pos=vec(6, 1, 0), radius=GRAB_MIN, color=color.red)
 ]
+
+attachedObs = None
 
 def followPath(path):
 
@@ -112,6 +113,12 @@ def renderForwardKinematics(T1, T2, T3, D):
     GRAB_BAR2.pos = armState[8]
     GRAB_BAR2.axis = armState[9]
 
+    print(ARM3.pos + GRAB_BAR1.axis)
+
+    if attachedObs is not None:
+        attachedObs.pos = ARM3.pos + ARM3.axis
+        attachedObs.pos += ARM3.axis.norm() * (GRAB_LEN - attachedObs.radius)
+
 def inverseKinematics(x, y, z):
 
     L1 = ARM_LENGTH
@@ -135,12 +142,13 @@ def inverseKinematics(x, y, z):
 
 # print(inverseKinematics(-ARM_LENGTH/2, ARM_LENGTH, 0))
 # print(inverseKinematics((1 + math.sqrt(3)) / 2, 0, (3 + sqrt(3)) / 2))
-# print(inverseKinematics(1, 1, 1))
+goal = inverseKinematics(OBS[0].pos.x, OBS[0].pos.y, OBS[0].pos.z)
 
 renderForwardKinematics(0, 0, 0, 0)
 
 startCspace = CSpace.stateToCspace(0, 0, 0, 0)
-endCspace = CSpace.stateToCspace(math.pi, math.pi/2, -math.pi/2, 1)
+# endCspace = CSpace.stateToCspace(math.pi, math.pi/2, -math.pi/2, 1)
+endCspace = CSpace.stateToCspace(*goal[0], 1)
 
 startNode = CSpace.CSpaceNode(*startCspace, [checkNoCollision])
 endNode = CSpace.CSpaceNode(*endCspace, [])

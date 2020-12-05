@@ -13,7 +13,7 @@ cspaceSegs = (
     200,
     100,
     100,
-    100
+    50
 )
 
 cspace = np.ones(cspaceSegs, np.bool)
