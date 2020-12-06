@@ -6,4 +6,4 @@ def sphereInter(pos, fwd, spos, r):
     # A + dot(AP,AB) / dot(AB,AB) * AB
     projPoint = pos + (spos-pos).dot(fwd) / fwd.dot(fwd) * fwd
 
-    return (projPoint-spos).mag <= r
+    return (projPoint-spos).mag <= r and (projPoint - pos).mag <= fwd.mag

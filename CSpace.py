@@ -39,6 +39,18 @@ def stateToCspace(T1, T2, T3, D):
     T3_step = (cspaceLim[2][1] - cspaceLim[2][0]) / cspaceSegs[2]
     D_step  = (cspaceLim[3][1] - cspaceLim[3][0]) / cspaceSegs[3]
 
+    if T1 == cspaceLim[0][1]:
+        T1 -= T1_step/2
+
+    if T2 == cspaceLim[1][1]:
+        T2 -= T2_step/2
+
+    if T3 == cspaceLim[2][1]:
+        T3 -= T3_step/2
+
+    if D  == cspaceLim[3][1]:
+        D  -= D_step/2
+
     return (
         math.floor((T1 - cspaceLim[0][0]) / T1_step),
         math.floor((T2 - cspaceLim[1][0]) / T2_step),
@@ -60,6 +72,23 @@ def allComb(combArr):
 
     return ret
 
+def notOutOfBounds(T1I, T2I, T3I, DI):
+    if T1I < 0 or T2I < 0 or T3I < 0 or DI < 0:
+        return False
+
+    if T1I >= cspaceSegs[0]:
+        return False
+
+    if T2I >= cspaceSegs[1]:
+        return False
+
+    if T3I >= cspaceSegs[2]:
+        return False
+
+    if DI >= cspaceSegs[3]:
+        return False
+
+    return True
 
 class CSpaceNode(AStar.AStarNode):
 
@@ -68,7 +97,8 @@ class CSpaceNode(AStar.AStarNode):
         self.T2I = T2I
         self.T3I = T3I
         self.DI = DI
-        self.nodeFilters = nodeFilters
+        self.nodeFilters = [notOutOfBounds] + nodeFilters
+        # self.nodeFilters = nodeFilters
 
     def __eq__(self, other):
 
@@ -100,16 +130,19 @@ class CSpaceNode(AStar.AStarNode):
 
         return True
 
+    def getState(self):
+        return cspaceToState(self.T1I, self.T2I, self.T3I, self.DI)
+
     def adj(self):
 
         ret = map(lambda c: CSpaceNode(*c, self.nodeFilters), allComb([
             [self.T1I-1, self.T1I, self.T1I+1],
             [self.T2I-1, self.T2I, self.T2I+1],
             [self.T3I-1, self.T3I, self.T3I+1],
-            [self.DI-1, self.DI, self.DI+1],
+            [self.DI-1 , self.DI , self.DI+1 ],
         ]))
 
-        ret = [node for node in ret if self.validNode()]
+        ret = [node for node in ret if node.validNode()]
 
         return ret
 

@@ -22,6 +22,12 @@ class AStarNode:
         """
         raise NotImplementedError()
 
+    def validNode(self):
+        """
+        Returns True if the node is valid
+        """
+        return True
+
 class AStarPath:
 
     def __init__(self, oldPath=None, node=None):
@@ -52,6 +58,12 @@ class AStarPath:
 
 
 def AStar(startNode, endNode):
+
+    if not startNode.validNode():
+        raise RuntimeError("startNode not valid")
+
+    if not endNode.validNode():
+        raise RuntimeError("endNode not valid")
 
     pathList = [AStarPath(node=startNode)]
 
