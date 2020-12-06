@@ -5,14 +5,14 @@ import numpy as np
 cspaceLim = (
     (0, 2*math.pi),
     (-math.pi/2, math.pi/2),
-    (-math.pi/2, math.pi/2),
+    (-math.pi, math.pi),
     (0, 1)
 )
 
 cspaceSegs = (
     200,
     100,
-    100,
+    200,
     50
 )
 

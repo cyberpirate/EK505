@@ -9,15 +9,11 @@ import Collision
 
 ARM_RAD = 0.25
 ARM_LENGTH = 4
-GRAB_MIN = 0.25
-GRAB_MAX = 1
+GRAB_MIN = 0.5
+GRAB_MAX = 0.75
 GRAB_LEN = 1
 GRAB_RAD = 0.1
-
-# ARM1 = cylinder(length=ARM_LENGTH, radius=ARM_RAD, color=color.green)
-# ARM2 = cylinder(length=ARM_LENGTH, radius=ARM_RAD, color=color.red)
-# ARM1 = box(size=vec(3, 3, 3))
-# ARM2 = box(size=vec(3, 3, 3))
+OBS_RAD = 0.25
 
 ARM1 = cylinder(radius=ARM_RAD, color=color.green)
 ARM2 = cylinder(radius=ARM_RAD, color=color.red)
@@ -26,21 +22,21 @@ GRAB_BAR1 = cylinder(radius=GRAB_RAD, color=color.white)
 GRAB_BAR2 = cylinder(radius=GRAB_RAD, color=color.white)
 
 OBS = [
-    sphere(pos=vec(0, 0, 0), radius=GRAB_MIN, color=color.red),
-    sphere(pos=vec(0, 0, 0), radius=GRAB_MIN, color=color.red),
-    sphere(pos=vec(0, 0, 0), radius=GRAB_MIN, color=color.red),
-    sphere(pos=vec(0, 0, 0), radius=GRAB_MIN, color=color.red),
-    sphere(pos=vec(0, 0, 0), radius=GRAB_MIN, color=color.red)
+    sphere(pos=vec(0, 0, 0), radius=OBS_RAD, color=color.red),
+    sphere(pos=vec(0, 0, 0), radius=OBS_RAD, color=color.red),
+    sphere(pos=vec(0, 0, 0), radius=OBS_RAD, color=color.red),
+    sphere(pos=vec(0, 0, 0), radius=OBS_RAD, color=color.red),
+    sphere(pos=vec(0, 0, 0), radius=OBS_RAD, color=color.red)
 ]
 
 attachedObs = None
 
 def initOBS():
-    OBS[0].pos = vec(2, 0, -2)
-    OBS[1].pos = vec(2, 0, -1)
-    OBS[2].pos = vec(3, 0, -2)
-    OBS[3].pos = vec(3, 0, -1)
-    OBS[4].pos = vec(2.5, 0, -1.5)
+    OBS[0].pos = vec(3   , 0, -2)
+    OBS[1].pos = vec(1.5 , 0, -2)
+    OBS[2].pos = vec(0   , 0, -2)
+    OBS[3].pos = vec(-1.5, 0, -2)
+    OBS[4].pos = vec(-3  , 0, -2)
 
 def followPath(path):
 
@@ -126,8 +122,6 @@ def renderForwardKinematics(T1, T2, T3, D):
     GRAB_BAR2.pos = armState[8]
     GRAB_BAR2.axis = armState[9]
 
-    # print(ARM3.pos + GRAB_BAR1.axis)
-
     if attachedObs is not None:
         attachedObs.pos = ARM3.pos + ARM3.axis
         attachedObs.pos += ARM3.axis.norm() * (GRAB_LEN - attachedObs.radius)
@@ -174,10 +168,10 @@ def link2InverseKinematics(x, y, L1, L2):
     T1_neg2 = math.atan2(sT1_neg2, cT1_neg)
 
     ret = [
-        (T1_neg, T2_pos),   # color.red
-        (T1_pos, T2_pos),   # color.green
-        (T1_neg2, T2_neg),  # color.white
-        (T1_pos2, T2_neg)   # color.yellow
+        (T1_neg, T2_pos),
+        (T1_pos, T2_pos),
+        (T1_neg2, T2_neg),
+        (T1_pos2, T2_neg)
     ]
 
     ret = [ r for r in ret if link2CheckInv(*r, L1, L2, vec(x, y, 0))]
@@ -188,7 +182,7 @@ def inverseKinematics(x, y, z):
 
     L1 = ARM_LENGTH
     L2 = ARM_LENGTH
-    L3 = ARM_LENGTH
+    L3 = ARM_LENGTH + GRAB_LEN / 2
 
     pp = vec(x, 0, z)
 
@@ -207,76 +201,13 @@ def inverseKinematics(x, y, z):
         (T1, *link2State[1])
     ]
 
-# def inverseKinematics(x, y, z):
-
-#     L1 = ARM_LENGTH
-#     L2 = ARM_LENGTH
-#     L3 = ARM_LENGTH
-
-#     # T1 = math.atan(y / x)
-
-#     # T2 = math.atan((z - L1) / math.sqrt(x**2 + y**2))
-
-#     # T2_ = math.acos((L3**2 - L2**2 - x**2 - y**2 - (z - L1)**2) / (-2*L2*math.sqrt(x**2 + y**2 + (z - L1)**2)))
-
-#     # T3 = math.pi - math.acos((x**2 + y**2 + (z - L1)**2 - L2**2 - L3**2) / (-2*L2*L3))
-
-#     # ret = [
-#     #     (T1, T2 + T2_, -T3),
-#     #     (T1, T2 - T2_, T3)
-#     # ]
-
-#     # ret = [ r for r in ret if CSpace.notOutOfBounds(*CSpace.stateToCspace(*r, 0))]
-
-#     # if len(ret) == 0:
-#     #     raise RuntimeError("No inverse kinematics found")
-
-#     # return ret
-
-#     # T3 = math.acos((x**2 + y**2 + (z-L1)**2 - L2**2 - L3**2) / (2*L2*L3))
-
-#     # a = L3*math.sin(T3)
-#     # b = L2 + L3*math.cos(T3)
-#     # c = z - L1
-#     # r = math.sqrt(a**2 + b**2)
-
-#     # T2 = math.atan(c / math.sqrt(r**2 - c**2)) - math.atan(a/b)
-#     # T1 = math.atan(y/x)
-
-#     # return [(T1, T2, T3)]
-
-#     pp = vec(x, 0, z)
-#     T1 = math.acos(pp.dot(vec(1, 0, 0)) / pp.mag)
-
-#     planeNorm = pp.cross(vec(0, 1, 0)).norm()
-
-#     v = goal.pos - vec(0, ARM_LENGTH, 0)
-#     w = planeNorm
-#     vt = v - (v.dot(w)/w.mag**2)*w
-#     goalp = vec(0, ARM_LENGTH, 0) + vt
-
-#     xp = vec(goalp.x, 0, goalp.z).mag
-#     yp = goalp.y
-
-#     cT3 = (xp**2 + yp**2 - L2**2 - L3**2) / (2*L2*L3)
-#     sT3_pos = math.sqrt(1 - cT3**2)
-#     sT3_neg = -sT3_pos
-
-#     T3_pos = math.atan2(sT3_pos, cT3)
-#     T3_neg = math.atan2(sT3_neg, cT3)
-
-#     cT2_pos = (xp*(L2 + L2*cT3) + yp*L3*sT3_pos) / (xp**2 + yp**2)
-#     cT2_neg = (xp*(L2 + L2*cT3) + yp*L3*sT3_neg) / (xp**2 + yp**2)
-
-#     return [(0, 0, 0)]
-
 def travelAndOpen(startState, endXYZ):
-    goal = inverseKinematics(*endXYZ)
+    goals = inverseKinematics(*endXYZ)
 
     startNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*startState), [checkNoCollision])
-    endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*goal[0], 1), [checkNoCollision])
+    endNodes = [ CSpace.CSpaceNode(*CSpace.stateToCspace(*g, 1), [checkNoCollision]) for g in goals ]
 
-    return AStar.AStar(startNode, endNode)
+    return AStar.AStar(startNode, endNodes)
 
 def closeHere(startState):
 
@@ -285,15 +216,15 @@ def closeHere(startState):
     startNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*startState), [])
     endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*goal), [])
 
-    return AStar.AStar(startNode, endNode)
+    return AStar.AStar(startNode, [endNode])
 
 def travelKeepClosed(startState, endXYZ):
-    goal = inverseKinematics(*endXYZ)
+    goals = inverseKinematics(*endXYZ)
 
     startNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*startState), [checkNoCollision, checkStillClosed])
-    endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*goal[0], 0), [checkNoCollision, checkStillClosed])
+    endNodes = [ CSpace.CSpaceNode(*CSpace.stateToCspace(*g, 0), [checkNoCollision, checkStillClosed]) for g in goals ]
 
-    return AStar.AStar(startNode, endNode)
+    return AStar.AStar(startNode, endNodes)
 
 def openHere(startState):
 
@@ -302,109 +233,53 @@ def openHere(startState):
     startNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*startState), [])
     endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*goal), [])
 
-    return AStar.AStar(startNode, endNode)
+    return AStar.AStar(startNode, [endNode])
 
 def travel(startState, endState):
 
     startNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*startState), [checkNoCollision])
     endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*endState), [checkNoCollision])
 
-    return AStar.AStar(startNode, endNode)
+    return AStar.AStar(startNode, [endNode])
 
-# while True:
-#     initOBS()
-#     startState = (0, 0, 0, 0)
-#     robotState = startState
-#     renderForwardKinematics(*robotState)
-
-#     for i in range(len(OBS)):
-
-#         print("Moving {}".format(i))
-
-#         # Travel to the object to pick up
-#         path = travelAndOpen(robotState, (OBS[i].pos.x, OBS[i].pos.y, OBS[i].pos.z))
-#         followPath(path)
-#         robotState = path[-1].getState()
-
-#         # Close around the object
-#         path = closeHere(robotState)
-#         followPath(path)
-#         robotState = path[-1].getState()
-
-#         # Set the object as "grabbed"
-#         attachedObs = OBS[i]
-
-#         # Drag object to where we place it
-#         placePos = vec(2 - i*GRAB_MAX*1.5, ARM_LENGTH, -2)
-#         path = travelKeepClosed(robotState, (placePos.x, placePos.y, placePos.z))
-#         followPath(path)
-#         robotState = path[-1].getState()
-
-#         # Open end effector
-#         path = openHere(robotState)
-#         followPath(path)
-#         robotState = path[-1].getState()
-
-#         # Drop object
-#         attachedObs = None
-
-#     # back to start state
-#     path = travel(robotState, startState)
-#     followPath(path)
-#     robotState = path[-1].getState()
-
-renderForwardKinematics(0, 0, 0, 0)
-
-goal = OBS[0]
-goal.pos = vec(4, 5, -4)
-
-state = inverseKinematics(goal.pos.x, goal.pos.y, goal.pos.z)
-print(state)
-
-i = 0
 while True:
+    initOBS()
+    startState = (0, 0, 0, 0)
+    robotState = startState
+    renderForwardKinematics(*robotState)
 
-    rate(1)
+    for i in range(len(OBS)):
 
-    renderForwardKinematics(*state[i % len(state)], 0)
+        print("Moving {}".format(i))
 
-    i += 1
+        # Travel to the object to pick up
+        path = travelAndOpen(robotState, (OBS[i].pos.x, OBS[i].pos.y, OBS[i].pos.z))
+        followPath(path)
+        robotState = path[-1].getState()
 
-# i = 0
+        # Close around the object
+        path = closeHere(robotState)
+        followPath(path)
+        robotState = path[-1].getState()
 
-# orbit = OBS[0]
-# goal = OBS[1]
-# goalp = OBS[2]
-# norm = OBS[3]
+        # Set the object as "grabbed"
+        attachedObs = OBS[i]
 
-# goal.pos = vec(4, 5, -4)
+        # Drag object to where we place it
+        placePos = vec(3 - i*1.5, 0, -6)
+        path = travelKeepClosed(robotState, (placePos.x, placePos.y, placePos.z))
+        followPath(path)
+        robotState = path[-1].getState()
 
-# arr = arrow()
+        # Open end effector
+        path = openHere(robotState)
+        followPath(path)
+        robotState = path[-1].getState()
 
-# while True:
-#     i += 1
+        # Drop object
+        attachedObs = None
 
-#     rate(30)
-    
-
-#     orbit.pos = vec(ARM_LENGTH, 0, 0).rotate(i/100, axis=vec(0, 1, 0))
-
-#     pp = vec(orbit.pos.x, 0, orbit.pos.z)
-
-#     T1 = math.acos(pp.dot(vec(1, 0, 0)) / pp.mag)
-
-#     if orbit.pos.z > 0:
-#         T1 = math.pi + (math.pi - T1)
-
-#     renderForwardKinematics(T1, 0, 0, 0)
-    
-
-#     planeNorm = pp.cross(vec(0, 1, 0))
-#     norm.pos = planeNorm.norm()
-
-#     v = goal.pos - vec(0, ARM_LENGTH, 0)
-#     w = planeNorm
-#     vt = v - (v.dot(w)/w.mag**2)*w
-#     goalp.pos = vec(0, ARM_LENGTH, 0) + vt
-#     arr.pos = goalp.pos
-#     arr.axis = goal.pos - goalp.pos
+    # back to start state
+    path = travel(robotState, startState)
+    followPath(path)
+    robotState = path[-1].getState()

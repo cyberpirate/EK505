@@ -30,8 +30,9 @@ class AStarNode:
 
 class AStarPath:
 
-    def __init__(self, oldPath=None, node=None):
+    def __init__(self, goalNode, oldPath=None, node=None):
 
+        self.goalNode = goalNode
         self.cost = oldPath.cost if oldPath != None else 0
         self.nodes = oldPath.nodes.copy() if oldPath != None else []
 
@@ -46,26 +47,35 @@ class AStarPath:
         
         return ret
     
-    def estCost(self, node):
-        return self.cost + self.nodes[-1].estCost(node)
+    def estCost(self):
+        return self.cost + self.nodes[-1].estCost(self.goalNode)
 
-    def getAdjPaths(self):
+    def getAdjPaths(self, goalNodes):
         endNode = self.nodes[-1]
 
         adjNodes = endNode.adj()
 
-        return [ AStarPath(self, n) for n in adjNodes if n not in self.nodes]
+        ret = []
+
+        for g in goalNodes:
+            for a in adjNodes:
+                ret.append(AStarPath(g, self, a))
+
+        return ret
 
 
-def AStar(startNode, endNode):
+def AStar(startNode, endNodes):
 
     if not startNode.validNode():
         raise RuntimeError("startNode not valid")
 
-    if not endNode.validNode():
-        raise RuntimeError("endNode not valid")
+    endNodes = [ e for e in endNodes if e.validNode() ]
 
-    pathList = [AStarPath(node=startNode)]
+    if len(endNodes) == 0:
+        raise RuntimeError("no valid end nodes")
+
+    pathList = [ AStarPath(e, node=startNode) for e in endNodes ]
+    pathList.sort(key=lambda p: p.estCost())
 
     while True:
 
@@ -74,11 +84,11 @@ def AStar(startNode, endNode):
 
         path = pathList.pop(0)
 
-        if path.nodes[-1] == endNode:
+        if path.nodes[-1] in endNodes:
             return path.nodes
         
-        pathList += path.getAdjPaths()
-        pathList.sort(key=lambda p: p.estCost(endNode))
+        pathList += path.getAdjPaths(endNodes)
+        pathList.sort(key=lambda p: p.estCost())
 
 if __name__ == "__main__":
 
@@ -115,5 +125,5 @@ if __name__ == "__main__":
                 raise RuntimeError("Node not adjacent")
             return 1
     
-    print(AStar(XYNode(0, 0), XYNode(5, 5)))
+    print(AStar(XYNode(0, 0), [XYNode(3, 1), XYNode(5, 5)]))
     
