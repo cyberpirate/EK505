@@ -50,16 +50,15 @@ class AStarPath:
     def estCost(self):
         return self.cost + self.nodes[-1].estCost(self.goalNode)
 
-    def getAdjPaths(self, goalNodes):
+    def getAdjPaths(self):
         endNode = self.nodes[-1]
 
         adjNodes = endNode.adj()
 
         ret = []
 
-        for g in goalNodes:
-            for a in adjNodes:
-                ret.append(AStarPath(g, self, a))
+        for a in adjNodes:
+            ret.append(AStarPath(self.goalNode, self, a))
 
         return ret
 
@@ -87,7 +86,7 @@ def AStar(startNode, endNodes):
         if path.nodes[-1] in endNodes:
             return path.nodes
         
-        pathList += path.getAdjPaths(endNodes)
+        pathList += path.getAdjPaths()
         pathList.sort(key=lambda p: p.estCost())
 
 if __name__ == "__main__":

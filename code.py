@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from vpython import *
+import sys
 import math
 import numpy as np
 import AStar
@@ -32,11 +33,11 @@ OBS = [
 attachedObs = None
 
 def initOBS():
-    OBS[0].pos = vec(3   , 0, -2)
-    OBS[1].pos = vec(1.5 , 0, -2)
+    OBS[0].pos = vec(3   , 4, -2)
+    OBS[1].pos = vec(1.5 , 4, -2)
     OBS[2].pos = vec(0   , 0, -2)
-    OBS[3].pos = vec(-1.5, 0, -2)
-    OBS[4].pos = vec(-3  , 0, -2)
+    OBS[3].pos = vec(-1.5, 4, -2)
+    OBS[4].pos = vec(-3  , 4, -2)
 
 def followPath(path):
 
@@ -241,6 +242,45 @@ def travel(startState, endState):
     endNode = CSpace.CSpaceNode(*CSpace.stateToCspace(*endState), [checkNoCollision])
 
     return AStar.AStar(startNode, [endNode])
+
+if len(sys.argv) > 1 and sys.argv[1] == "genCspace":
+    print("gen cpsace")
+    initOBS()
+
+    fullCspace = ~CSpace.getFullCspace([checkNoCollision])
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
+    # closed arm
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.set_title("Arm closed")
+
+    xLabel = ax.set_xlabel('T1')
+    yLabel = ax.set_ylabel('T2')
+    zLabel = ax.set_zlabel('T3')
+
+    ax.voxels(fullCspace[:,:,:,0])
+
+    fig.savefig("arm_closed.png")
+
+    # open arm
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.set_title("Arm open")
+
+    xLabel = ax.set_xlabel('T1')
+    yLabel = ax.set_ylabel('T2')
+    zLabel = ax.set_zlabel('T3')
+
+    ax.voxels(fullCspace[:,:,:,-1])
+
+    fig.savefig("arm_open.png")
+
+    plt.show()
 
 while True:
     initOBS()

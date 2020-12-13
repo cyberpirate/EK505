@@ -9,14 +9,20 @@ cspaceLim = (
     (0, 1)
 )
 
+# cspaceSegs = (
+#     200,
+#     100,
+#     200,
+#     50
+# )
+
 cspaceSegs = (
-    200,
-    100,
-    200,
-    50
+    20,
+    10,
+    20,
+    5
 )
 
-cspace = np.ones(cspaceSegs, np.bool)
 
 def cspaceToState(T1I, T2I, T3I, DI):
 
@@ -71,6 +77,36 @@ def allComb(combArr):
         ret = newRet
 
     return ret
+
+def getFullCspace(nodeFilters):
+
+    cspace = np.ones(cspaceSegs, np.bool)
+
+    def validNode(T1I, T2I, T3I, DI):
+
+        for nodeFilter in nodeFilters:
+            if not nodeFilter(T1I, T2I, T3I, DI):
+                return False
+
+        return True
+
+    i = 0
+    maxI = np.prod(cspaceSegs)
+
+    for T1I in range(cspaceSegs[0]):
+        for T2I in range(cspaceSegs[1]):
+            for T3I in range(cspaceSegs[2]):
+                for DI in range(cspaceSegs[3]):
+                    cspace[T1I, T2I, T3I, DI] = validNode(T1I, T2I, T3I, DI)
+
+                    if i % (maxI/10000) == 0:
+                        print("\r", end="")
+                        print("{}%".format(round((i/maxI) * 100, 2)), end="             ")
+                    i += 1
+
+    print()
+
+    return cspace
 
 def notOutOfBounds(T1I, T2I, T3I, DI):
     if T1I < 0 or T2I < 0 or T3I < 0 or DI < 0:
